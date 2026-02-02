@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Director Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .bg-gray-900 { background: white !important; }
+            .bg-gray-800 { background: #f9fafb !important; border: 1px solid #e5e7eb !important; }
+            .text-white { color: #111827 !important; }
+            .text-gray-400 { color: #6b7280 !important; }
+            .text-emerald-400, .text-emerald-500 { color: #059669 !important; }
+            .text-blue-400 { color: #2563eb !important; }
+            .text-amber-400 { color: #d97706 !important; }
+            .text-purple-400 { color: #7c3aed !important; }
+            .text-red-400 { color: #dc2626 !important; }
+            canvas { max-width: 100% !important; height: auto !important; }
+            .page-break-before { page-break-before: always; }
+            .avoid-break { page-break-inside: avoid; }
+        }
+        @media screen {
+            .print-only { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-white">QA Director Dashboard</h1>
+                <p class="text-gray-400 mt-1">Monthly Usage Report</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Division Filter -->
+                <div class="relative">
+                    <button id="divisionFilterBtn" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white flex items-center gap-2 hover:bg-gray-700 transition">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        <span>Divisions</span>
+                        <span id="filterCount" class="bg-emerald-500 text-xs px-1.5 py-0.5 rounded-full">5</span>
+                    </button>
+                    <div id="divisionDropdown" class="hidden absolute right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
+                        <div class="p-3 border-b border-gray-700">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium">Filter Divisions</span>
+                                <button id="clearFilters" class="text-xs text-emerald-400 hover:text-emerald-300">Select All</button>
+                            </div>
+                        </div>
+                        <div class="p-2 space-y-1" id="divisionCheckboxes">
+                            <!-- Checkboxes will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Print Button -->
+                <button onclick="window.print()" class="no-print bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white flex items-center gap-2 hover:bg-gray-700 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    </svg>
+                    Print Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-400 text-sm">Total QA Engagement</p>
+                        <p class="text-3xl font-bold text-white mt-2" id="totalEngagement">-</p>
+                    </div>
+                    <div class="bg-emerald-500/10 rounded-lg p-3">
+                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-emerald-400 text-sm mt-4">
+                    <span class="font-semibold">↑ 7.9%</span> from last month
+                </p>
+            </div>
+
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-400 text-sm">Reports Generated</p>
+                        <p class="text-3xl font-bold text-white mt-2" id="totalReports">-</p>
+                    </div>
+                    <div class="bg-blue-500/10 rounded-lg p-3">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-blue-400 text-sm mt-4">
+                    <span class="font-semibold">↑ 11.8%</span> from last month
+                </p>
+            </div>
+
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-400 text-sm">Issues Raised</p>
+                        <p class="text-3xl font-bold text-white mt-2" id="totalIssues">-</p>
+                    </div>
+                    <div class="bg-amber-500/10 rounded-lg p-3">
+                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-amber-400 text-sm mt-4">
+                    <span class="font-semibold">↑ 27.3%</span> from last month
+                </p>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-white mb-4">Total Engagement Trend</h3>
+                <canvas id="engagementTrendChart"></canvas>
+            </div>
+
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-white mb-4">Reports & Issues Trend</h3>
+                <canvas id="reportsIssuesTrendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-white mb-4">Engagement by Division (Current Month)</h3>
+                <canvas id="engagementChart"></canvas>
+            </div>
+
+            <div class="bg-gray-800 border border-gray-700 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-white mb-4">Status Breakdown by Division</h3>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Division Trend Chart -->
+        <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Division Engagement Trends</h3>
+            <canvas id="divisionTrendChart"></canvas>
+        </div>
+
+        <!-- Division Details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="divisionDetails">
+            <!-- Division cards will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        let dashboardData = null;
+        let charts = {};
+
+        // Load data from API
+        async function loadData() {
+            try {
+                const response = await fetch('/api/data');
+                dashboardData = await response.json();
+                updateDashboard();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function updateDashboard() {
+            if (!dashboardData) return;
+
+            // Update totals
+            document.getElementById('totalEngagement').textContent = dashboardData.totals.engagement;
+            document.getElementById('totalReports').textContent = dashboardData.totals.reports;
+            document.getElementById('totalIssues').textContent = dashboardData.totals.issues;
+
+            // Create division checkboxes
+            createDivisionCheckboxes();
+
+            // Create division details cards
+            createDivisionCards();
+
+            // Create charts
+            createCharts();
+        }
+
+        function createDivisionCheckboxes() {
+            const container = document.getElementById('divisionCheckboxes');
+            const divisions = [
+                { key: 'ConcreteRepairs', color: '#f87171' },
+                { key: 'MembraneRoofing', color: '#60a5fa' },
+                { key: 'Facade', color: '#a78bfa' },
+                { key: 'Tanking', color: '#fbbf24' },
+                { key: 'OldSansom', color: '#34d399' }
+            ];
+
+            container.innerHTML = divisions.map(div => `
+                <label class="flex items-center gap-3 p-2 rounded hover:bg-gray-700 cursor-pointer">
+                    <input type="checkbox" value="${div.key}" checked class="division-checkbox w-4 h-4 rounded bg-gray-700 border-gray-600 text-emerald-500">
+                    <span class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full" style="background-color: ${div.color}"></span>
+                        ${dashboardData.divisions[div.key].name}
+                    </span>
+                </label>
+            `).join('');
+        }
+
+        function createDivisionCards() {
+            const container = document.getElementById('divisionDetails');
+            const divisions = ['ConcreteRepairs', 'MembraneRoofing', 'Facade', 'Tanking', 'OldSansom'];
+
+            container.innerHTML = divisions.map(divKey => {
+                const div = dashboardData.currentMonth[divKey];
+                const passRate = ((div.pass / div.total) * 100).toFixed(1);
+                return `
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 division-card" data-division="${divKey}">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-lg font-semibold text-white">${div.name}</h4>
+                            <span class="w-3 h-3 rounded-full" style="background-color: ${dashboardData.divisions[divKey].color}"></span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Total Engagement</span>
+                                <span class="text-white font-semibold">${div.total}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Pass Rate</span>
+                                <span class="text-emerald-400 font-semibold">${passRate}%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Reports</span>
+                                <span class="text-white font-semibold">${div.reports}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Issues</span>
+                                <span class="text-amber-400 font-semibold">${div.issues}</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-700">
+                            <div class="flex gap-2 text-sm">
+                                <span class="text-emerald-400">Pass: ${div.pass}</span>
+                                <span class="text-red-400">Fail: ${div.fail}</span>
+                                <span class="text-gray-500">N/A: ${div.na}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function createCharts() {
+            // Total Engagement Trend
+            const engagementTrendCtx = document.getElementById('engagementTrendChart').getContext('2d');
+            charts.engagementTrend = new Chart(engagementTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: dashboardData.months,
+                    datasets: [{
+                        label: 'Total QA Engagement',
+                        data: dashboardData.totalEngagement,
+                        borderColor: '#34d399',
+                        backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#34d399'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            // Reports & Issues Trend
+            const reportsIssuesTrendCtx = document.getElementById('reportsIssuesTrendChart').getContext('2d');
+            charts.reportsIssuesTrend = new Chart(reportsIssuesTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: dashboardData.months,
+                    datasets: [
+                        {
+                            label: 'Reports Generated',
+                            data: dashboardData.reportsGenerated,
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#60a5fa'
+                        },
+                        {
+                            label: 'Issues Raised',
+                            data: dashboardData.issuesRaised,
+                            borderColor: '#fbbf24',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#fbbf24'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'top', labels: { color: '#9ca3af' } } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            // Division Trend Chart
+            const divisionTrendCtx = document.getElementById('divisionTrendChart').getContext('2d');
+            const divisionDatasets = Object.keys(dashboardData.divisions).map(key => ({
+                label: dashboardData.divisions[key].name,
+                data: dashboardData.divisions[key].trend,
+                borderColor: dashboardData.divisions[key].color,
+                tension: 0.3,
+                pointRadius: 4
+            }));
+
+            charts.divisionTrend = new Chart(divisionTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: dashboardData.months,
+                    datasets: divisionDatasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'top', labels: { color: '#9ca3af', boxWidth: 12 } } },
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            // Engagement by Division (current month)
+            const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+            const divisionKeys = ['ConcreteRepairs', 'MembraneRoofing', 'Facade', 'Tanking', 'OldSansom'];
+            const engagementData = divisionKeys.map(key => dashboardData.currentMonth[key].total);
+            const colors = divisionKeys.map(key => dashboardData.divisions[key].color);
+            const labels = divisionKeys.map(key => dashboardData.divisions[key].name);
+
+            charts.engagement = new Chart(engagementCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total QA Engagement',
+                        data: engagementData,
+                        backgroundColor: colors,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            const passData = divisionKeys.map(key => dashboardData.currentMonth[key].pass);
+            const failData = divisionKeys.map(key => dashboardData.currentMonth[key].fail);
+            const naData = divisionKeys.map(key => dashboardData.currentMonth[key].na);
+
+            charts.status = new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Pass', data: passData, backgroundColor: '#34d399', borderRadius: 4 },
+                        { label: 'Fail', data: failData, backgroundColor: '#f87171', borderRadius: 4 },
+                        { label: 'N/A', data: naData, backgroundColor: '#6b7280', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'top', labels: { color: '#9ca3af' } } },
+                    scales: {
+                        y: { beginAtZero: true, stacked: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+                        x: { stacked: true, grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+        }
+
+        // Division filter dropdown
+        document.getElementById('divisionFilterBtn').addEventListener('click', function() {
+            document.getElementById('divisionDropdown').classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('divisionDropdown');
+            const button = document.getElementById('divisionFilterBtn');
+            if (!dropdown.contains(event.target) && !button.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('clearFilters').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.division-checkbox');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+            updateFilterCount();
+        });
+
+        document.addEventListener('change', function(event) {
+            if (event.target.classList.contains('division-checkbox')) {
+                updateFilterCount();
+            }
+        });
+
+        function updateFilterCount() {
+            const checked = document.querySelectorAll('.division-checkbox:checked').length;
+            document.getElementById('filterCount').textContent = checked;
+        }
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
